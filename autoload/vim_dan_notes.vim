@@ -12,7 +12,17 @@ import sys
 import vim
 from pathlib import Path
 
-# Use plugin_root from Vim script
+# Check if vim-dan plugin is loaded
+try:
+    vim_dan_loaded = vim.eval("exists('g:loaded_vim_dan')")
+    if vim_dan_loaded != "1":
+        vim.command("echoerr 'vim-dan-notes: Required plugin vim-dan is not loaded, check https://github.com/rafmartom/vim-dan'")
+        raise RuntimeError("vim-dan plugin not loaded")
+except vim.error:
+    vim.command("echoerr 'vim-dan-notes: Error checking for vim-dan plugin'")
+    raise
+
+# Add plugin's python/ dir to PATH
 plugin_root = Path(vim.eval("g:vim_dan_notes#plugin_root"))
 sys.path.insert(0, str(plugin_root / 'python'))
 
