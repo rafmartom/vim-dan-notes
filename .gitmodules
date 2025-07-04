@@ -1,0 +1,3 @@
+[submodule "python/external/rafpyutils"]
+	path = python/external/rafpyutils
+	url = https://github.com/rafmartom/rafpyutils

@@ -4,6 +4,7 @@ Author: rafmartom@gmail.com
 Description: core functions of python/vim-dan-notes
 """
 import vim
+import rafpyutils
 
 def refresh_main_toc():
     """Rebuild the Table of Contents."""
@@ -19,4 +20,5 @@ def refresh_main_toc():
 
 
     print('Refreshing TOC')
+    rafpyutils.insert_sublist_between_markers(input_list, input_sublist, start_pattern, end_pattern)
     return 

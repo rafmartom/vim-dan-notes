@@ -12,6 +12,10 @@ import sys
 import vim
 from pathlib import Path
 
+# Add rafpyutils submodule to sys.path
+plugin_root = Path(vim.eval("g:vim_dan_notes#plugin_root"))
+sys.path.insert(0, str(plugin_root / 'python' / 'external' / 'rafpyutils'))
+
 # Check if vim-dan plugin is loaded
 try:
     vim_dan_loaded = vim.eval("exists('g:loaded_vim_dan')")
