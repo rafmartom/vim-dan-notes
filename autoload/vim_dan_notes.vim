@@ -31,6 +31,8 @@ plugin_root = Path(vim.eval("g:vim_dan_notes#plugin_root"))
 sys.path.insert(0, str(plugin_root / 'python'))
 
 from vim_dan_notes.core import refresh_main_toc
+from vim_dan_notes.core import salute_person
+from vim_dan_notes.core import say_something_to_person
 EOF
 enddef
 
@@ -39,4 +41,12 @@ g:vim_dan_notes#plugin_root = plugin_root
 
 export def RefreshMainTOC()
     py3 refresh_main_toc()
+enddef
+
+export def SalutePerson(person: string)
+    execute 'py3 salute_person("' .. person .. '")'
+enddef
+
+export def SaySomethingToPerson(something: string, person: string)
+    execute 'py3 say_something_to_person("' .. something .. '","' .. person .. '")'
 enddef

@@ -20,5 +20,11 @@ def refresh_main_toc():
 
 
     print('Refreshing TOC')
-    rafpyutils.insert_sublist_between_markers(input_list, input_sublist, start_pattern, end_pattern)
     return 
+
+def salute_person(person):
+    print(f'Saluting {person}')
+
+
+def say_something_to_person(something, person):
+    print(f'Saying {something} to {person}')

@@ -24,7 +24,9 @@ call vim_dan_notes#InitPython()
 
 
 " User Command
-command! -nargs=0 DanNotesRefreshMainTOC call vim_dan_notes#RefreshMainTOC()
+command! -nargs=0 DanRefreshMainTOC call vim_dan_notes#RefreshMainTOC()
+command! -nargs=1 DanSalutePerson call vim_dan_notes#SalutePerson(<f-args>)
+command! -nargs=* DanSaySomethingToPerson call vim_dan_notes#SaySomethingToPerson(<f-args>)
 
 
 " Restore 'compatible' option
