@@ -31,7 +31,7 @@ plugin_root = Path(vim.eval("g:vim_dan_notes#plugin_root"))
 sys.path.insert(0, str(plugin_root / 'python'))
 
 from vim_dan_notes.core import refresh_main_toc
-from vim_dan_notes.core import pass_args_from_vim_to_py
+from vim_dan_notes.core import pass_args_return_from_vim_to_py
 EOF
 enddef
 
@@ -43,12 +43,13 @@ export def RefreshMainTOC()
 enddef
 
 
-export def PassArgsFromVimToPy(...args: list<any>)
+export def PassArgsReturnFromVimToPy(...args: list<any>)
     ## LENGTH CHECK
     if len(args) != 3
         throw 'PassArgsFromVimToPy: Expected exactly 3 arguments'
     endif
 
     var args_json = json_encode(args)
-    execute 'py3 pass_args_from_vim_to_py(' .. args_json .. ')'
+    execute 'py3 pass_args_return_from_vim_to_py(' .. args_json .. ')'
+    echo g:output_pass_args_return_from_vim_to_py
 enddef

@@ -23,5 +23,5 @@ def refresh_main_toc():
     rafpyutils.insert_sublist_between_markers(input_list, input_sublist, start_pattern, end_pattern)
     return 
 
-def pass_args_from_vim_to_py(f_args):
-    print(f'This is arg 0 {f_args[0]}, This is arg 1 {f_args[1]},This is arg 2 {f_args[2]}')
+def pass_args_return_from_vim_to_py(f_args):
+    vim.vars["output_pass_args_return_from_vim_to_py"] = [ f_args[0], f_args[0] + f_args[1], f_args[0] + f_args[1] + f_args[2] ] 
