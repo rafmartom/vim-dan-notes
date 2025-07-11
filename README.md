@@ -9,6 +9,18 @@ Drop *link targets* in any part of the document, and recall them from any other 
 
 This plugin have some dependencies as `git submodules` so you need to use some equivalent to `git clone --recurse-submodules`, for the case of [vim-plug](https://github.com/junegunn/vim-plug)
 
+
 ```
-Plug 'rafmartom/vim-dan-notes', { 'do': 'git submodule update --init --recursive' }
+Plug 'rafmartom/vim-dan-notes', { 'do': 'make' }
+```
+
+Or if just cloning or using a traditional one rule directive on the .vimrc 
+
+```
+Plug 'rafmartom/vim-dan-notes'
+```
+
+```
+cd ~.vim/plugged/vim-dan-notes
+make
 ```
