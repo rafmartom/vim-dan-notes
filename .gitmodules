@@ -1,3 +1,6 @@
 [submodule "python/external/rafpyutils"]
 	path = python/external/rafpyutils
 	url = https://github.com/rafmartom/rafpyutils
+[submodule "python/external/pyfiglet"]
+	path = python/external/pyfiglet
+	url = https://github.com/pwaller/pyfiglet
