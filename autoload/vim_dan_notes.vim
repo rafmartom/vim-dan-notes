@@ -33,10 +33,13 @@ sys.path.insert(0, str(plugin_root / 'python'))
 
 from vim_dan_notes.core import refresh_main_toc
 from vim_dan_notes.core import parse_links_target
+from vim_dan_notes.core import parse_block_links_target
+from vim_dan_notes.core import parse_inline_links_target
 from vim_dan_notes.core import print_general_toc
 from vim_dan_notes.core import parse_ext_list
 from vim_dan_notes.core import print_main_header
 from vim_dan_notes.core import print_new_article
+
 EOF
 enddef
 
@@ -49,6 +52,14 @@ enddef
 
 export def ParseLinksTarget()
     py3 parse_links_target()
+enddef
+
+export def ParseBlockLinksTarget()
+    py3 parse_block_links_target()
+enddef
+
+export def ParseInlineLinksTarget()
+    py3 parse_inline_links_target()
 enddef
 
 
@@ -71,12 +82,9 @@ export def ReplaceGeneralTOC(...args: list<any>)
 
     var final_args = []
 
-    # Ensure links are parsed
-    if !exists('g:output_parse_links_target')
-        ParseLinksTarget()
-    endif
+    ParseBlockLinksTarget()
 
-    final_args[0] = g:output_parse_links_target
+    final_args[0] = g:output_parse_block_links_target
     var args_json = json_encode(final_args)
 
     execute 'py3 print_general_toc(' .. args_json .. ')'
@@ -143,8 +151,8 @@ export def CreateNewArticle(label: string, wrap_columns: number)
 
     var final_args: list<any> = []
 
-    ParseLinksTarget()
-    final_args = [g:output_parse_links_target, label, wrap_columns > 0 ? wrap_columns : 105]
+    ParseBlockLinksTarget()
+    final_args = [g:output_parse_block_links_target, label, wrap_columns > 0 ? wrap_columns : 105]
 
     var args_json: string = json_encode(final_args)
 
@@ -185,3 +193,6 @@ enddef
 #    append('$', g:output_print_new_article)
 #
 #enddef
+
+
+

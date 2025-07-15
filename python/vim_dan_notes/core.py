@@ -28,7 +28,7 @@ def refresh_main_toc():
 ## ----------------------------------------------------------------------------
 # @section HELPERS
 
-def parse_block_links_target(line, link_targets):
+def get_block_links_target(line, link_targets):
     tag_match = re.search(r'(?<=<B=)([0-9a-zA-Z]+)', line)
     if tag_match:
         label_match = re.search(r'(?<=>)([^<\n]+)', line)
@@ -42,7 +42,7 @@ def parse_block_links_target(line, link_targets):
         link_targets.append(entry)
 
 
-def parse_inline_links_target(line, link_targets):
+def get_inline_links_target(line, link_targets):
     tag_match = re.search(r'(?<=<I=)([0-9a-zA-Z]+)#([0-9a-zA-Z]+)', line)
     if tag_match:
         label_match = re.search(r'(?<=</I>)(.*?)(?=</I>)', line)
@@ -132,9 +132,25 @@ def parse_links_target():
     links_target = []
     buffer_lines = get_buffer_lines()
     for line in buffer_lines:
-        parse_block_links_target(line, links_target)
-        parse_inline_links_target(line, links_target)
+        get_block_links_target(line, links_target)
+        get_inline_links_target(line, links_target)
     vim.vars["output_parse_links_target"] = links_target
+
+
+def parse_block_links_target(): 
+    links_target = []
+    buffer_lines = get_buffer_lines()
+    for line in buffer_lines:
+        get_block_links_target(line, links_target)
+    vim.vars["output_parse_block_links_target"] = links_target
+
+
+def parse_inline_links_target(): 
+    links_target = []
+    buffer_lines = get_buffer_lines()
+    for line in buffer_lines:
+        get_inline_links_target(line, links_target)
+    vim.vars["output_parse_inline_links_target"] = links_target
 
 
 def print_general_toc(f_args):
@@ -260,23 +276,14 @@ def print_main_header(f_args):
 def print_new_article(f_args):
     links_target = f_args[0] 
 
-    ## Filtering the links target only
-    block_links_target = [link for link in links_target if link['type'] == 'b']
-    ## Get the lastone 
-
     label = f_args[1]
     wrap_columns = int(f_args[2])
-
-    print(f'[DEBUG]: {label=}')                           ## DEBUGGING
-    print(f'[DEBUG]: {wrap_columns=}')                    ## DEBUGGING
 
     output_list = []
 
     hr_line = '=' * wrap_columns
 
-    buid = get_next_buid(block_links_target[-1]['buid'])
-
-    print(block_links_target[-1])
+    buid = get_next_buid(links_target[-1]['buid'])
 
     output_list.append(hr_line)
     output_list.append(f"<B={buid}>{label}")
