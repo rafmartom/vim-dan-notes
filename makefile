@@ -64,6 +64,7 @@ $(PYTHON_DEP)/rafpyutils/.stamp:
 build-deps: $(PYTHON_DEP)/pyfiglet/.stamp $(PYTHON_DEP)/rafpyutils/.stamp
 #	$(MAKE) -C $(PYTHON_DEP)/pyfiglet full
 	cd $(PYTHON_DEP)/pyfiglet && python3 setup.py sdist bdist_wheel || { echo "Failed to build pyfiglet distributions" >&2; exit 1; }
+	cp $(PYTHON_DEP)/pyfiglet/pyfiglet/fonts-contrib/* $(PYTHON_DEP)/pyfiglet/pyfiglet/fonts/
 	$(MAKE) -C $(PYTHON_DEP)/rafpyutils all
 
 clean-deps:

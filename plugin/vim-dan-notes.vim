@@ -27,6 +27,8 @@ call vim_dan_notes#InitPython()
 command! -nargs=0 DanRefreshMainTOC call vim_dan_notes#RefreshMainTOC()
 command! -nargs=0 DanParseLinksTarget call vim_dan_notes#ParseLinksTarget()
 command! -nargs=* DanPrintGeneralTOC call vim_dan_notes#PrintGeneralTOC(<f-args>)
+command! -nargs=* DanReplaceGeneralTOC call vim_dan_notes#ReplaceGeneralTOC(<f-args>)
+command! -nargs=* DanReplaceMainHeader call vim_dan_notes#ReplaceMainHeader(<f-args>)
 
 
 " Restore 'compatible' option
