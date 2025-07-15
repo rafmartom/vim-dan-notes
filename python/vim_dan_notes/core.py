@@ -89,6 +89,38 @@ def parse_dan_modeline(line):
 
     return modeline_varname_value
 
+def get_next_buid(buid):
+    """
+    Given a DAN BUID (0-9, a-z, A-Z), returns the next BUID in sequence.
+    Examples:
+        'l5' -> 'l6'
+        'la' -> 'lb'
+        'lZ' -> 'm0'
+        'ZZ' -> '000' (overflow, adds a digit)
+    """
+    # Define the alphanumeric characters in order
+    alphanumeric = [str(d) for d in range(10)] + [chr(c) for c in range(ord('a'), ord('z')+1)] + [chr(C) for C in range(ord('A'), ord('Z')+1)]
+    base = len(alphanumeric)
+    char_to_value = {c: i for i, c in enumerate(alphanumeric)}
+
+    # Convert BUID to decimal
+    decimal = 0
+    for char in buid:
+        decimal = decimal * base + char_to_value[char]
+
+    # Increment
+    decimal += 1
+
+    # Convert back to BUID
+    if decimal == 0:
+        return alphanumeric[0]
+
+    next_buid = []
+    while decimal > 0:
+        decimal, remainder = divmod(decimal, base)
+        next_buid.append(alphanumeric[remainder])
+
+    return ''.join(reversed(next_buid))
 
 ## EOF EOF EOF HELPERS 
 ## ----------------------------------------------------------------------------
@@ -222,13 +254,46 @@ def print_main_header(f_args):
     else:
         output_list.append(f'- Tags :')
 
-
-
-
     vim.vars["output_print_main_header"] = output_list
 
 
+def print_new_article(f_args):
+    links_target = f_args[0] 
 
+    ## Filtering the links target only
+    block_links_target = [link for link in links_target if link['type'] == 'b']
+    ## Get the lastone 
+
+    label = f_args[1]
+    wrap_columns = int(f_args[2])
+
+    print(f'[DEBUG]: {label=}')                           ## DEBUGGING
+    print(f'[DEBUG]: {wrap_columns=}')                    ## DEBUGGING
+
+    output_list = []
+
+    hr_line = '=' * wrap_columns
+
+    buid = get_next_buid(block_links_target[-1]['buid'])
+
+    print(block_links_target[-1])
+
+    output_list.append(hr_line)
+    output_list.append(f"<B={buid}>{label}")
+
+    # Get the ASCII art as a string with linebreaks
+    pyfiglet_string = pyfiglet.figlet_format(label)
+
+    # Split into lines and remove any trailing whitespace/linebreaks
+    lines = [line.rstrip() for line in pyfiglet_string.split('\n')]
+    lines.pop()
+
+    # Append to your output list (assuming output_list exists)
+    output_list.extend(lines)
+
+    output_list.append(f"</B><L=0>To TOC</L> | <L={buid}>Back to Article Top</L>")
+
+    vim.vars["output_print_new_article"] = output_list
 
 ## EOF EOF EOF SUBROUTINE_DECLARATIONS 
 ## ----------------------------------------------------------------------------

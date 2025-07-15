@@ -36,6 +36,7 @@ from vim_dan_notes.core import parse_links_target
 from vim_dan_notes.core import print_general_toc
 from vim_dan_notes.core import parse_ext_list
 from vim_dan_notes.core import print_main_header
+from vim_dan_notes.core import print_new_article
 EOF
 enddef
 
@@ -132,3 +133,55 @@ export def ReplaceMainHeader(...args: list<any>)
         echoerr 'Markers not found!'
     endif
 enddef
+
+
+# Call it like :call vim_dan_notes#CreateNewArticle("The new world" , 105)
+export def CreateNewArticle(label: string, wrap_columns: number)
+    if empty(label)
+        throw 'CreateNewArticle: Expected a non-empty label argument'
+    endif
+
+    var final_args: list<any> = []
+
+    ParseLinksTarget()
+    final_args = [g:output_parse_links_target, label, wrap_columns > 0 ? wrap_columns : 105]
+
+    var args_json: string = json_encode(final_args)
+
+    execute 'py3 print_new_article(' .. args_json .. ')'
+
+    append('$', g:output_print_new_article)
+enddef
+
+
+#export def CreateNewArticle(label: string, wrap_columns: number)
+##export def CreateNewArticle(args: list<any>)
+#
+#    if len(args) < 1
+#        throw 'CreateNewArticle: Expected at least 1 argument (label)'
+#    endif
+#
+#    var final_args = []
+#
+#    ParseLinksTarget()
+#     
+#    final_args[0] = g:output_parse_links_target
+#
+##    final_args[1] = args[0]
+#    final_args[1] = label
+#
+#    # Use the second argument as wrap_columns if provided, otherwise default to 105
+##    final_args[2] = len(args) > 1 ? wrap_columns : 105
+#
+#    final_args[2] = a:wrap_columns > 0 ? a:wrap_columns : 105
+#
+#    # Default arguments
+##    final_args[2] = empty(args) ? 105 : args[1]
+#
+#    var args_json = json_encode(final_args)
+#
+#    execute 'py3 print_new_article(' .. args_json .. ')'
+#
+#    append('$', g:output_print_new_article)
+#
+#enddef
