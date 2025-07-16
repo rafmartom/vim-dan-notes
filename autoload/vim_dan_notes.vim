@@ -28,7 +28,6 @@ from pathlib import Path
 
 # Add rafpyutils submodule to sys.path
 plugin_root = Path(vim.eval("g:vim_dan_notes#plugin_root"))
-sys.path.insert(0, str(plugin_root / 'python' / 'external' / 'rafpyutils'))
 sys.path.insert(0, str(plugin_root / 'python' / 'external' / 'pyfiglet'))
 
 # Check if vim-dan plugin is loaded
@@ -47,13 +46,15 @@ sys.path.insert(0, str(plugin_root / 'python'))
 
 
 # Imports of all the python functions
-from vim_dan_notes.core import parse_links_target
 from vim_dan_notes.core import parse_block_links_target
 from vim_dan_notes.core import parse_inline_links_target
+from vim_dan_notes.core import parse_labeled_inline_links_target
 from vim_dan_notes.core import print_general_toc
 from vim_dan_notes.core import parse_ext_list
 from vim_dan_notes.core import print_main_header
 from vim_dan_notes.core import print_new_article
+from vim_dan_notes.core import print_article_toc
+
 
 EOF
 enddef
@@ -76,45 +77,148 @@ g:vim_dan_notes#plugin_root = plugin_root
 
 
 ##
-# Side effect: Updates the {@code output_parse_links_target} Variable.
-# @deprecated For efficiency you either parse BlockLinks or InlineLinks
-export def ParseLinksTarget()
-    py3 parse_links_target()
-enddef
-
-##
+# @param start_line {lnum} line number where to start the search
+# @param end_line {lnum} line number where to finnish the search
 # Side effect: Updates the {@code output_parse_block_links_target} Variable.
-export def ParseBlockLinksTarget()
-    py3 parse_block_links_target()
-enddef
-
-##
-# Side effect: Updates the {@code output_parse_inline_links_target} Variable.
-export def ParseInlineLinksTarget()
-    py3 parse_inline_links_target()
-enddef
-
-##
-# Side effect: Updates the {@code output_print_general_toc} Variable.
-export def PrintGeneralTOC(...args: list<any>)
+# Example: :call vim_dan_notes#ParseBlockLinksTarget(20 , 80)
+export def ParseBlockLinksTarget(start_line: number, end_line: number)
     var final_args = []
+    final_args[0] = start_line
+    final_args[1] = end_line
 
-    # Ensure links are parsed
-    if !exists('g:output_parse_links_target')
-        ParseLinksTarget()
-    endif
-
-    final_args[0] = g:output_parse_links_target
     var args_json = json_encode(final_args)
+    execute 'py3 parse_block_links_target(' .. args_json .. ')'
 
-    execute 'py3 print_general_toc(' .. args_json .. ')'
 enddef
+
+##
+# @param start_line {lnum} line number where to start the search
+# @param end_line {lnum} line number where to finnish the search
+# Side effect: Updates the {@code output_parse_labeled_inline_links_target} Variable.
+# Example: :call vim_dan_notes#ParseInlineLinksTarget(20 , 80)
+export def ParseInlineLinksTarget(start_line: number, end_line: number)
+    var final_args = []
+    final_args[0] = start_line
+    final_args[1] = end_line
+
+    var args_json = json_encode(final_args)
+#    execute 'py3 parse_inline_links_target(' .. args_json .. ')'
+    execute 'py3 parse_labeled_inline_links_target(' .. args_json .. ')'
+
+enddef
+
 
 ##
 # Side effect: Updates the {@code output_parse_ext_list} Variable.
 export def ParseExtList()
     py3 parse_ext_list()
 enddef
+
+
+## Get the BUID of the Article for a given {lnum}
+# @param {lnum} Line number
+# @return list [BUID of the Article, {lnum} of <B=>]
+# @throws OutOfDanBlock if no BUID is found
+# Example: :echo vim_dan_notes#GetBuidLnum(1500)
+export def GetBuidLnum(lnum: number): list<any>
+    var current_lnum = lnum
+    # Ensure the line number is valid
+    if current_lnum < 1 || current_lnum > line('$')
+        throw 'OutOfDanBlock: Invalid line number'
+    endif
+
+    # Search backward for the pattern ^<B=([[:alnum:]]\+)>.*$
+    while current_lnum >= 1
+        var line = getline(current_lnum)
+        var match = matchlist(line, '^<B=\([[:alnum:]]\+\)>.*$')
+        if !empty(match)
+            return [match[1], current_lnum] # Return the BUID and line number
+        endif
+        current_lnum -= 1
+    endwhile
+
+    throw 'OutOfDanBlock: No OpenBlockTag <B=> found'
+enddef
+
+
+## Get the line number of the next closing Block Tag </B>
+# @param {lnum} Line number
+# @return {lnum} of the next </B>
+# @throws OutOfDanBlock if no </B> is found
+# Example: :echo vim_dan_notes#GetCloseBTagLnum(1500)
+export def GetCloseBTagLnum(lnum: number): number
+    var current_lnum = lnum
+    # Ensure the line number is valid
+    if current_lnum < 1 || current_lnum > line('$')
+        throw 'OutOfDanBlock: Invalid line number'
+    endif
+
+    # Search forward for the pattern ^<\/B>
+    while current_lnum >= 1
+        var line = getline(current_lnum)
+        var match = matchlist(line, '^<\/B>')
+        if !empty(match)
+            return current_lnum # Return the line number
+        endif
+        current_lnum += 1
+    endwhile
+
+    throw 'OutOfDanBlock: No CloseBlockTag </B> found'
+enddef
+
+
+## Get the line number of the next TOC Tag <T>
+# @param {lnum} Line number
+# @return {lnum} of the next <T>
+# @throws OutOfDanBlock if no <T> is found
+# Example: :echo vim_dan_notes#GetTocTagLnum(6981)
+export def GetTocTagLnum(lnum: number): number
+    var current_lnum = lnum
+    # Ensure the line number is valid
+    if current_lnum < 1 || current_lnum > line('$')
+        throw 'OutOfDanBlock: Invalid line number'
+    endif
+
+    # Search forward for the pattern ^<TB>
+    while current_lnum >= 1
+        var line = getline(current_lnum)
+        var match = matchlist(line, '^<T>')
+        if !empty(match)
+            return current_lnum # Return the line number
+        endif
+        current_lnum += 1
+    endwhile
+
+    throw 'OutOfDanBlock: No TOC Tag <T> found'
+enddef
+ 
+
+
+## Given a line number it will return the label of the Block Tag 
+# @param {lnum} Line number
+# @return label {sting} of the sourronding <B=>
+# Example: :echo vim_dan_notes#GetBlockLabelFromLnum(800)
+export def GetBlockLabelFromLnum(lnum: number): string
+
+    # Parse All the Block Links Target for the Document
+    ParseBlockLinksTarget(1, line('$'))
+    
+    var blocks: list<dict<any>> = g:output_parse_block_links_target
+    var result: string = ''
+
+    for block in blocks
+        if block.line_no <= lnum
+            result = block.label
+        else
+            break
+        endif
+    endfor
+
+    return result
+
+enddef
+
+
 
 ## EOF EOF EOF INTERNAL_ACTIONS 
 ## ----------------------------------------------------------------------------
@@ -135,7 +239,8 @@ enddef
 export def ReplaceGeneralTOC(...args: list<any>)
     var final_args = []
 
-    ParseBlockLinksTarget()
+    # Parse All the Block Links Target for the Document
+    ParseBlockLinksTarget(1, line('$'))
 
     final_args[0] = g:output_parse_block_links_target
     var args_json = json_encode(final_args)
@@ -208,7 +313,8 @@ export def CreateNewArticle(label: string, wrap_columns: number)
 
     var final_args: list<any> = []
 
-    ParseBlockLinksTarget()
+    # Parse All the Block Links Target for the Document
+    ParseBlockLinksTarget(1, line('$'))
     final_args = [g:output_parse_block_links_target, label, wrap_columns > 0 ? wrap_columns : 105]
 
     var args_json: string = json_encode(final_args)
@@ -217,6 +323,58 @@ export def CreateNewArticle(label: string, wrap_columns: number)
 
     append('$', g:output_print_new_article)
 enddef
+
+
+
+
+## Replace the Article TOC for the Article in which the lnum is located 
+# @param {lnum} Line number
+# Example: :call vim_dan_notes#ReplaceArticleTOC(6992)
+export def ReplaceArticleTOC(lnum: number)
+    
+    ## Getting the Boundaries of the Article
+    var buid_start_lnum = GetBuidLnum(lnum)
+    var buid = buid_start_lnum[0]
+    var start_lnum = buid_start_lnum[1]
+    var close_lnum = GetCloseBTagLnum(lnum)
+
+    ## Parsing all the Links Target for those Boundaries
+    ParseInlineLinksTarget(start_lnum, close_lnum)
+
+
+    var final_args = []
+    final_args[0] = g:output_parse_labeled_inline_links_target
+    final_args[1] = buid 
+    # @todo this below can be just a pattern to that start_lnum , with the <B>
+    # pattern to get the label rather than activating all of this subroutine
+    final_args[2] = GetBlockLabelFromLnum(lnum)
+
+    var args_json = json_encode(final_args)
+
+    execute 'py3 print_article_toc(' .. args_json .. ')'
+
+
+    # Find start line
+    var start = start_lnum
+    # Find end line
+    var end = GetTocTagLnum(start_lnum)
+
+    if start > 0 && end > 0 && end >= start
+        # Delete from start to end inclusive
+        silent! execute $':{start},{end}delete _'
+
+        # Insert new lines after start - 1
+        append(start - 1, g:output_print_article_toc)
+    else
+        echoerr 'Markers not found!'
+    endif
+
+
+
+
+enddef
+
+
 
 
 ## EOF EOF EOF USER_ACTIONS 

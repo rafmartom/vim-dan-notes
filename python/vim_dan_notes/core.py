@@ -12,9 +12,14 @@ import pyfiglet
 # @section UTILS
 # @description Encapsulated utilities called solely within the program
 
+# @deprecated now using get_buffer_lines_from
 def get_buffer_lines():
     """Return current buffer content as list of lines"""
     return vim.current.buffer[:]
+
+def get_buffer_lines_from(start_line, end_line):
+    """Return current buffer content as list of lines from start_line to end_line"""
+    return vim.current.buffer[start_line - 1: end_line]
 
 
 def parse_dan_codeblock(line):
@@ -81,7 +86,7 @@ def get_next_buid(buid):
     return ''.join(reversed(next_buid))
 
 
-def get_block_links_target(line, link_targets):
+def get_block_links_target(line, link_targets, line_no):
     tag_match = re.search(r'(?<=<B=)([0-9a-zA-Z]+)', line)
     if tag_match:
         label_match = re.search(r'(?<=>)([^<\n]+)', line)
@@ -90,11 +95,13 @@ def get_block_links_target(line, link_targets):
             'buid': tag_match.group(1),
             'iid': '',
             'line': line,
-            'type': 'b'
+            'type': 'b',
+            'line_no': line_no
         }
         link_targets.append(entry)
 
 
+# @deprecated there is no current use to parse unlabeled inline links target
 def get_inline_links_target(line, link_targets):
     tag_match = re.search(r'(?<=<I=)([0-9a-zA-Z]+)#([0-9a-zA-Z]+)', line)
     if tag_match:
@@ -107,6 +114,20 @@ def get_inline_links_target(line, link_targets):
             'type': 'i'
         }
         link_targets.append(entry)
+
+
+def get_labeled_inline_links_target(line, link_targets):
+    match = re.search(r'(?<=<I=)([0-9a-zA-Z]+)#([0-9a-zA-Z]+)>(.*?)(?=</I>)', line)
+    if match:
+        entry = {
+            'label': match.group(3) if match else '',
+            'buid': match.group(1),
+            'iid': match.group(2),
+            'line': line,
+            'type': 'i'
+        }
+        link_targets.append(entry)
+
 
 
 
@@ -123,29 +144,43 @@ def get_inline_links_target(line, link_targets):
 ## but triggered by the User_Actions
 
 
-def parse_links_target(): 
-    links_target = []
-    buffer_lines = get_buffer_lines()
-    for line in buffer_lines:
-        get_block_links_target(line, links_target)
-        get_inline_links_target(line, links_target)
-    vim.vars["output_parse_links_target"] = links_target
+def parse_block_links_target(f_args): 
+    start_line = f_args[0]
+    end_line = f_args[1]
 
-
-def parse_block_links_target(): 
     links_target = []
-    buffer_lines = get_buffer_lines()
+
+    buffer_lines = get_buffer_lines_from(start_line, end_line)
+    line_no = 1
     for line in buffer_lines:
-        get_block_links_target(line, links_target)
+        get_block_links_target(line, links_target, line_no)
+        line_no = line_no + 1
     vim.vars["output_parse_block_links_target"] = links_target
 
 
-def parse_inline_links_target(): 
+# @deprecated there is no current use to parse unlabeled inline links target
+def parse_inline_links_target(f_args): 
+    start_line = f_args[0]
+    end_line = f_args[1]
+
     links_target = []
-    buffer_lines = get_buffer_lines()
+
+    buffer_lines = get_buffer_lines_from(start_line, end_line)
     for line in buffer_lines:
         get_inline_links_target(line, links_target)
     vim.vars["output_parse_inline_links_target"] = links_target
+
+
+def parse_labeled_inline_links_target(f_args): 
+    start_line = f_args[0]
+    end_line = f_args[1]
+
+    links_target = []
+
+    buffer_lines = get_buffer_lines_from(start_line, end_line)
+    for line in buffer_lines:
+        get_labeled_inline_links_target(line, links_target)
+    vim.vars["output_parse_labeled_inline_links_target"] = links_target
 
 
 def parse_ext_list(): 
@@ -302,23 +337,52 @@ def print_new_article(f_args):
     # Append to your output list (assuming output_list exists)
     output_list.extend(lines)
 
+    # Article TOC Tag
+    output_list.append(f"<T>")
+
+    output_list.append(f"")
+    output_list.append(f"")
+
     output_list.append(f"</B><L=0>To TOC</L> | <L={buid}>Back to Article Top</L>")
 
     vim.vars["output_print_new_article"] = output_list
 
 
 
+
+def print_article_toc(f_args):
+    links_target = f_args[0] 
+    buid = f_args[1] 
+    label = f_args[2] 
+
+    output_list = []
+
+
+    output_list.append(f"<B={buid}>{label}")
+
+
+    # Get the ASCII art as a string with linebreaks
+    pyfiglet_string = pyfiglet.figlet_format(label)
+
+    # Split into lines and remove any trailing whitespace/linebreaks
+    lines = [line.rstrip() for line in pyfiglet_string.split('\n')]
+    lines.pop()
+
+    # Append to your output list (assuming output_list exists)
+    output_list.extend(lines)
+
+    output_list.append(f"")
+
+    for link_target in links_target:
+        if link_target['type'] == 'i':
+            output_list.append(f"- <L={link_target['buid']}#{link_target['iid']}>{link_target['label']}</L>")
+
+    # Article TOC Tag
+    output_list.append(f"<T>")
+
+
+    vim.vars["output_print_article_toc"] = output_list
+
+
 ## EOF EOF EOF USER_ACTIONS 
 ## ----------------------------------------------------------------------------
-
-
-
-
-
-
-
-
-
-
-
-

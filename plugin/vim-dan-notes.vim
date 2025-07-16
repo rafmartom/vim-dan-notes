@@ -26,6 +26,7 @@ call vim_dan_notes#InitPython()
 " User Command
 command! -nargs=* DanReplaceMainHeader call vim_dan_notes#ReplaceMainHeader(<f-args>)
 command! -nargs=* DanReplaceGeneralTOC call vim_dan_notes#ReplaceGeneralTOC(<f-args>)
+command! -nargs=0 DanReplaceCurrentArticleTOC call vim_dan_notes#ReplaceArticleTOC(line('.'))
 "command! -nargs=* DanCreateNewArticle call vim_dan_notes#CreateNewArticle(<f-args>)
 
 
