@@ -23,6 +23,7 @@ help:
 ## ----------------------------------------------------------------------------
 # @section PROJECT_TARGETS
 
+
 all: build-deps
 install:
 	@echo "[install] No installation steps defined yet."
@@ -32,6 +33,7 @@ uninstall:
 clean: clean-deps
 
 
+
 ## EOF EOF EOF PROJECT_TARGETS
 ## ----------------------------------------------------------------------------
 
@@ -39,10 +41,11 @@ clean: clean-deps
 ## ----------------------------------------------------------------------------
 # @section DEPENDENCY_MANAGEMENT
 
+
 PYTHON_DEP := python/external
 PYFIGLET_URL := $(shell curl -s https://api.github.com/repos/pwaller/pyfiglet/releases/latest | jq -r '.tarball_url')
 
-fetch-deps: $(PYTHON_DEP)/pyfiglet/.stamp $(PYTHON_DEP)/rafpyutils/.stamp
+fetch-deps: $(PYTHON_DEP)/pyfiglet/.stamp
 
 $(PYTHON_DEP)/pyfiglet/.stamp:
 	mkdir -p $(PYTHON_DEP)
@@ -52,24 +55,13 @@ $(PYTHON_DEP)/pyfiglet/.stamp:
 	mv $(PYTHON_DEP)/pwaller-pyfiglet-* $(PYTHON_DEP)/pyfiglet
 	touch $(PYTHON_DEP)/pyfiglet/.stamp
 
-$(PYTHON_DEP)/rafpyutils/.stamp:
-	mkdir -p $(PYTHON_DEP)
-	if [ -d $(PYTHON_DEP)/rafpyutils/.git ]; then \
-		cd $(PYTHON_DEP)/rafpyutils && git pull; \
-	else \
-		git clone https://github.com/rafmartom/rafpyutils $(PYTHON_DEP)/rafpyutils || { echo "Failed to clone rafpyutils" >&2; exit 1; }; \
-	fi
-	touch $(PYTHON_DEP)/rafpyutils/.stamp
-
-build-deps: $(PYTHON_DEP)/pyfiglet/.stamp $(PYTHON_DEP)/rafpyutils/.stamp
-#	$(MAKE) -C $(PYTHON_DEP)/pyfiglet full
+build-deps: $(PYTHON_DEP)/pyfiglet/.stamp
 	cd $(PYTHON_DEP)/pyfiglet && python3 setup.py sdist bdist_wheel || { echo "Failed to build pyfiglet distributions" >&2; exit 1; }
 	cp $(PYTHON_DEP)/pyfiglet/pyfiglet/fonts-contrib/* $(PYTHON_DEP)/pyfiglet/pyfiglet/fonts/
-	$(MAKE) -C $(PYTHON_DEP)/rafpyutils all
 
 clean-deps:
 	rm -rf python/external/pyfiglet
-	rm -rf python/external/rafpyutils
+
 
 ## EOF EOF EOF DEPENDENCY_MANAGEMENT
 ## ----------------------------------------------------------------------------

@@ -6,58 +6,16 @@ Description: core functions of python/vim-dan-notes
 import vim
 import re
 import pyfiglet
-import rafpyutils
 
-def refresh_main_toc():
-    """Rebuild the Table of Contents."""
-
-    # Checking for vim_dan loaded
-    vim.eval("exists('g:loaded_vim_dan')")
-
-    # Checking if it is a dan file
-    if vim.eval('&filetype') != 'dan':
-        vim.command("echom 'Warning: You are not in a .dan file'")
-
-
-
-
-    print('Refreshing TOC')
-    rafpyutils.insert_sublist_between_markers(input_list, input_sublist, start_pattern, end_pattern)
-    return 
 
 ## ----------------------------------------------------------------------------
-# @section HELPERS
-
-def get_block_links_target(line, link_targets):
-    tag_match = re.search(r'(?<=<B=)([0-9a-zA-Z]+)', line)
-    if tag_match:
-        label_match = re.search(r'(?<=>)([^<\n]+)', line)
-        entry = {
-            'label': label_match.group(1),
-            'buid': tag_match.group(1),
-            'iid': '',
-            'line': line,
-            'type': 'b'
-        }
-        link_targets.append(entry)
-
-
-def get_inline_links_target(line, link_targets):
-    tag_match = re.search(r'(?<=<I=)([0-9a-zA-Z]+)#([0-9a-zA-Z]+)', line)
-    if tag_match:
-        label_match = re.search(r'(?<=</I>)(.*?)(?=</I>)', line)
-        entry = {
-            'label': label_match.group(1) if label_match else '',
-            'buid': tag_match.group(1),
-            'iid': tag_match.group(2),
-            'line': line,
-            'type': 'i'
-        }
-        link_targets.append(entry)
+# @section UTILS
+# @description Encapsulated utilities called solely within the program
 
 def get_buffer_lines():
     """Return current buffer content as list of lines"""
     return vim.current.buffer[:]
+
 
 def parse_dan_codeblock(line):
     extension = re.search(r'(?<=```)\w+$', line)
@@ -122,11 +80,48 @@ def get_next_buid(buid):
 
     return ''.join(reversed(next_buid))
 
-## EOF EOF EOF HELPERS 
+
+def get_block_links_target(line, link_targets):
+    tag_match = re.search(r'(?<=<B=)([0-9a-zA-Z]+)', line)
+    if tag_match:
+        label_match = re.search(r'(?<=>)([^<\n]+)', line)
+        entry = {
+            'label': label_match.group(1),
+            'buid': tag_match.group(1),
+            'iid': '',
+            'line': line,
+            'type': 'b'
+        }
+        link_targets.append(entry)
+
+
+def get_inline_links_target(line, link_targets):
+    tag_match = re.search(r'(?<=<I=)([0-9a-zA-Z]+)#([0-9a-zA-Z]+)', line)
+    if tag_match:
+        label_match = re.search(r'(?<=</I>)(.*?)(?=</I>)', line)
+        entry = {
+            'label': label_match.group(1) if label_match else '',
+            'buid': tag_match.group(1),
+            'iid': tag_match.group(2),
+            'line': line,
+            'type': 'i'
+        }
+        link_targets.append(entry)
+
+
+
+## EOF EOF EOF UTILS 
 ## ----------------------------------------------------------------------------
 
+
+
+
+
 ## ----------------------------------------------------------------------------
-# @section SUBROUTINE_DECLARATIONS
+## @section INTERNAL_ACTIONS
+## @description Functions exposed to the User, not meant to be used directly 
+## but triggered by the User_Actions
+
 
 def parse_links_target(): 
     links_target = []
@@ -153,6 +148,33 @@ def parse_inline_links_target():
     vim.vars["output_parse_inline_links_target"] = links_target
 
 
+def parse_ext_list(): 
+    ext_list = []
+
+    buffer_lines = get_buffer_lines()
+
+    for line in buffer_lines:
+        match = re.search(r'(?<=```)\w+$', line)
+        if match:
+            new_ext = match.group()
+            if new_ext not in ext_list:
+                ext_list.append(new_ext)
+
+
+    vim.vars["output_parse_ext_list"] = ext_list
+
+
+
+## EOF EOF EOF INTERNAL_ACTIONS 
+## ----------------------------------------------------------------------------
+
+
+
+## ----------------------------------------------------------------------------
+## @section USER_ACTIONS
+## @description Functions exposed to the User, meant to be used directly.
+
+
 def print_general_toc(f_args):
     links_target = f_args[0] 
     output_list = []
@@ -171,29 +193,10 @@ def print_general_toc(f_args):
 
     for link_target in links_target:
         if link_target['type'] == 'b':
-#            output_list.append(f"<L={link_target['buid']}>{link_target['label']}</L>")
             output_list.append(f"- <L={link_target['buid']}>{link_target['label']}</L>")
     
     output_list.append(r"</B><L=0>To TOC</L>")
     vim.vars["output_print_general_toc"] = output_list
-
-
-
-def parse_ext_list(): 
-    ext_list = []
-
-    buffer_lines = get_buffer_lines()
-
-    for line in buffer_lines:
-        match = re.search(r'(?<=```)\w+$', line)
-        if match:
-            new_ext = match.group()
-            if new_ext not in ext_list:
-                ext_list.append(new_ext)
-
-
-    vim.vars["output_parse_ext_list"] = ext_list
-
 
 
 def print_main_header(f_args):
@@ -273,6 +276,7 @@ def print_main_header(f_args):
     vim.vars["output_print_main_header"] = output_list
 
 
+
 def print_new_article(f_args):
     links_target = f_args[0] 
 
@@ -302,6 +306,19 @@ def print_new_article(f_args):
 
     vim.vars["output_print_new_article"] = output_list
 
-## EOF EOF EOF SUBROUTINE_DECLARATIONS 
+
+
+## EOF EOF EOF USER_ACTIONS 
 ## ----------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
 

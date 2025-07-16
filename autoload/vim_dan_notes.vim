@@ -1,6 +1,20 @@
 vim9script
 # Author: rafmartom
-# File with some functions to use on vim-dan-notes
+# File with the vim functions exposed by vim-dan-notes
+#
+# Note: Most of the functionalities are written in python
+#   But are launched in vim, they will be documented first where they show up
+#   If functions are exposed via a command Example: would be refering that
+#   Command
+#   Functions passed to python dont have an explicit return statement, but set
+#   a vim var instead , it will be documented as 
+#   Side effect: Updates the {@code <varName>} Variable.
+
+## ----------------------------------------------------------------------------
+## @section PLUGIN_LAUNCHER
+## @description All functionalities regarding to the plugin initiation,
+## and code sourcing 
+
 
 # Get plugin root directory at script level
 const plugin_root: string = expand('<sfile>:p:h:h')
@@ -31,7 +45,8 @@ except vim.error:
 plugin_root = Path(vim.eval("g:vim_dan_notes#plugin_root"))
 sys.path.insert(0, str(plugin_root / 'python'))
 
-from vim_dan_notes.core import refresh_main_toc
+
+# Imports of all the python functions
 from vim_dan_notes.core import parse_links_target
 from vim_dan_notes.core import parse_block_links_target
 from vim_dan_notes.core import parse_inline_links_target
@@ -46,23 +61,41 @@ enddef
 # Store plugin_root in a global variable
 g:vim_dan_notes#plugin_root = plugin_root
 
-export def RefreshMainTOC()
-    py3 refresh_main_toc()
-enddef
 
+## EOF EOF EOF PLUGIN_LAUNCHER 
+## ----------------------------------------------------------------------------
+
+
+
+
+
+## ----------------------------------------------------------------------------
+## @section INTERNAL_ACTIONS
+## @description Functions exposed to the User, not meant to be used directly 
+## but triggered by the User_Actions
+
+
+##
+# Side effect: Updates the {@code output_parse_links_target} Variable.
+# @deprecated For efficiency you either parse BlockLinks or InlineLinks
 export def ParseLinksTarget()
     py3 parse_links_target()
 enddef
 
+##
+# Side effect: Updates the {@code output_parse_block_links_target} Variable.
 export def ParseBlockLinksTarget()
     py3 parse_block_links_target()
 enddef
 
+##
+# Side effect: Updates the {@code output_parse_inline_links_target} Variable.
 export def ParseInlineLinksTarget()
     py3 parse_inline_links_target()
 enddef
 
-
+##
+# Side effect: Updates the {@code output_print_general_toc} Variable.
 export def PrintGeneralTOC(...args: list<any>)
     var final_args = []
 
@@ -77,9 +110,29 @@ export def PrintGeneralTOC(...args: list<any>)
     execute 'py3 print_general_toc(' .. args_json .. ')'
 enddef
 
+##
+# Side effect: Updates the {@code output_parse_ext_list} Variable.
+export def ParseExtList()
+    py3 parse_ext_list()
+enddef
 
+## EOF EOF EOF INTERNAL_ACTIONS 
+## ----------------------------------------------------------------------------
+
+
+
+
+
+## ----------------------------------------------------------------------------
+## @section USER_ACTIONS
+## @description Functions exposed to the User, meant to be used directly.
+
+
+## Replace the General TOC of the .dan file
+#   In between <B=0> to </B=0> , updates all the Block Targets as Link Sources
+# Example: :DanReplaceGeneralTOC
+# @todo add parameter, wrap_columns
 export def ReplaceGeneralTOC(...args: list<any>)
-
     var final_args = []
 
     ParseBlockLinksTarget()
@@ -108,11 +161,11 @@ export def ReplaceGeneralTOC(...args: list<any>)
 
 enddef
 
-export def ParseExtList()
-    py3 parse_ext_list()
-enddef
 
-
+## Replace the Main Header of the .dan file
+#  That is from line 0 to the TOC opening tag <B=0>
+#  This includes all the dan modeline variables
+# Example: :DanReplaceGeneralTOC
 export def ReplaceMainHeader(...args: list<any>)
     var final_args = []
     ParseExtList()
@@ -142,8 +195,12 @@ export def ReplaceMainHeader(...args: list<any>)
     endif
 enddef
 
-
-# Call it like :call vim_dan_notes#CreateNewArticle("The new world" , 105)
+## Create the Title and Boundaries of a New Article
+# @param label
+# @param wrap_columns
+# Example: :call vim_dan_notes#CreateNewArticle("My New Article" , 105)
+# @todo Make a command :CreateNewArticle "My New Article" 105
+# @todo Make wrap_columns an optional param
 export def CreateNewArticle(label: string, wrap_columns: number)
     if empty(label)
         throw 'CreateNewArticle: Expected a non-empty label argument'
@@ -160,6 +217,10 @@ export def CreateNewArticle(label: string, wrap_columns: number)
 
     append('$', g:output_print_new_article)
 enddef
+
+
+## EOF EOF EOF USER_ACTIONS 
+## ----------------------------------------------------------------------------
 
 
 #export def CreateNewArticle(label: string, wrap_columns: number)
@@ -193,6 +254,3 @@ enddef
 #    append('$', g:output_print_new_article)
 #
 #enddef
-
-
-
