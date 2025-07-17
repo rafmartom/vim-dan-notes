@@ -52,9 +52,9 @@ def parse_dan_modeline(line):
 
     return modeline_varname_value
 
-def get_next_buid(buid):
+def get_next_uid(uid):
     """
-    Given a DAN BUID (0-9, a-z, A-Z), returns the next BUID in sequence.
+    Given a DAN UID (0-9, a-z, A-Z), returns the next UID in sequence.
     Examples:
         'l5' -> 'l6'
         'la' -> 'lb'
@@ -66,24 +66,24 @@ def get_next_buid(buid):
     base = len(alphanumeric)
     char_to_value = {c: i for i, c in enumerate(alphanumeric)}
 
-    # Convert BUID to decimal
+    # Convert UID to decimal
     decimal = 0
-    for char in buid:
+    for char in uid:
         decimal = decimal * base + char_to_value[char]
 
     # Increment
     decimal += 1
 
-    # Convert back to BUID
+    # Convert back to UID
     if decimal == 0:
         return alphanumeric[0]
 
-    next_buid = []
+    next_uid = []
     while decimal > 0:
         decimal, remainder = divmod(decimal, base)
-        next_buid.append(alphanumeric[remainder])
+        next_uid.append(alphanumeric[remainder])
 
-    return ''.join(reversed(next_buid))
+    return ''.join(reversed(next_uid))
 
 
 def get_block_links_target(line, link_targets, line_no):
@@ -199,6 +199,11 @@ def parse_ext_list():
     vim.vars["output_parse_ext_list"] = ext_list
 
 
+def get_next_uid_interface(f_args):
+    uid = f_args[0]
+    uid = get_next_uid(uid)
+
+    vim.vars["output_get_next_uid"] = uid
 
 ## EOF EOF EOF INTERNAL_ACTIONS 
 ## ----------------------------------------------------------------------------
@@ -322,7 +327,7 @@ def print_new_article(f_args):
 
     hr_line = '=' * wrap_columns
 
-    buid = get_next_buid(links_target[-1]['buid'])
+    buid = get_next_uid(links_target[-1]['buid'])
 
     output_list.append(hr_line)
     output_list.append(f"<B={buid}>{label}")

@@ -54,7 +54,7 @@ from vim_dan_notes.core import parse_ext_list
 from vim_dan_notes.core import print_main_header
 from vim_dan_notes.core import print_new_article
 from vim_dan_notes.core import print_article_toc
-
+from vim_dan_notes.core import get_next_uid_interface
 
 EOF
 enddef
@@ -105,6 +105,7 @@ export def ParseInlineLinksTarget(start_line: number, end_line: number)
 #    execute 'py3 parse_inline_links_target(' .. args_json .. ')'
     execute 'py3 parse_labeled_inline_links_target(' .. args_json .. ')'
 
+
 enddef
 
 
@@ -117,14 +118,14 @@ enddef
 
 ## Get the BUID of the Article for a given {lnum}
 # @param {lnum} Line number
-# @return list [BUID of the Article, {lnum} of <B=>]
-# @throws OutOfDanBlock if no BUID is found
+# @return list [BUID of the Article, {lnum} of <B=>] or empty list if not found
 # Example: :echo vim_dan_notes#GetBuidLnum(1500)
 export def GetBuidLnum(lnum: number): list<any>
     var current_lnum = lnum
     # Ensure the line number is valid
     if current_lnum < 1 || current_lnum > line('$')
-        throw 'OutOfDanBlock: Invalid line number'
+        echoerr 'Warning(GetBuidLnum): OutOfDanBlock: Invalid line number'
+        return [] # Return empty list for invalid line number
     endif
 
     # Search backward for the pattern ^<B=([[:alnum:]]\+)>.*$
@@ -137,20 +138,21 @@ export def GetBuidLnum(lnum: number): list<any>
         current_lnum -= 1
     endwhile
 
-    throw 'OutOfDanBlock: No OpenBlockTag <B=> found'
+    echoerr 'Warning(GetBuidLnum): OutOfDanBlock: No OpenBlockTag <B=> found'
+    return [] # Return empty list if no BUID is found
 enddef
 
 
 ## Get the line number of the next closing Block Tag </B>
 # @param {lnum} Line number
 # @return {lnum} of the next </B>
-# @throws OutOfDanBlock if no </B> is found
 # Example: :echo vim_dan_notes#GetCloseBTagLnum(1500)
 export def GetCloseBTagLnum(lnum: number): number
     var current_lnum = lnum
     # Ensure the line number is valid
     if current_lnum < 1 || current_lnum > line('$')
-        throw 'OutOfDanBlock: Invalid line number'
+        echoerr 'Warning(GetCloseBTagLnum): OutOfDanBlock: Invalid line number'
+        return 0
     endif
 
     # Search forward for the pattern ^<\/B>
@@ -163,20 +165,21 @@ export def GetCloseBTagLnum(lnum: number): number
         current_lnum += 1
     endwhile
 
-    throw 'OutOfDanBlock: No CloseBlockTag </B> found'
+    echoerr 'Warning(GetCloseBTagLnum): OutOfDanBlock: No CloseBlockTag </B> found'
+    return 0
 enddef
 
 
 ## Get the line number of the next TOC Tag <T>
 # @param {lnum} Line number
 # @return {lnum} of the next <T>
-# @throws OutOfDanBlock if no <T> is found
 # Example: :echo vim_dan_notes#GetTocTagLnum(6981)
 export def GetTocTagLnum(lnum: number): number
     var current_lnum = lnum
     # Ensure the line number is valid
     if current_lnum < 1 || current_lnum > line('$')
-        throw 'OutOfDanBlock: Invalid line number'
+        echoerr 'Warning(GetTocTagLnum): OutOfDanBlock: Invalid line number'
+        return 0
     endif
 
     # Search forward for the pattern ^<TB>
@@ -189,7 +192,8 @@ export def GetTocTagLnum(lnum: number): number
         current_lnum += 1
     endwhile
 
-    throw 'OutOfDanBlock: No TOC Tag <T> found'
+    echoerr 'Warning(GetTocTagLnum): OutOfDanBlock: No TOC Tag <T> found'
+    return 0
 enddef
  
 
@@ -330,6 +334,7 @@ enddef
 ## Replace the Article TOC for the Article in which the lnum is located 
 # @param {lnum} Line number
 # Example: :call vim_dan_notes#ReplaceArticleTOC(6992)
+# Example: :DanReplaceArticleTOC (Will assume current lineno)
 export def ReplaceArticleTOC(lnum: number)
     
     ## Getting the Boundaries of the Article
@@ -371,8 +376,42 @@ export def ReplaceArticleTOC(lnum: number)
 
 
 
+enddef
+
+
+## Create a new labelled inline Link Target for a certain <label> in a certain
+# <lnum> , will calculate the next available <buid#iid>
+# @param {lnum} Line number
+# @param label [str] The String which will be shown on the Link Target
+# Example: :call vim_dan_notes#CreateInlineLinkTarget(6997, 'deleteMe')
+# Example: :DanCreateInlineLinkTarget <label>
+# Side effect: Append a line at lnum with the link formed
+#export def CreateInlineLinkTarget(lnum: number, label: string): void
+export def CreateInlineLinkTarget(lnum: number, label: string)
+
+    ## Getting the Boundaries of the Article
+    var buid_start_lnum = GetBuidLnum(lnum)
+    var buid = buid_start_lnum[0]
+    var start_lnum = buid_start_lnum[1]
+    var close_lnum = GetCloseBTagLnum(lnum)
+
+    ## Parsing all the Links Target for those Boundaries
+    ParseInlineLinksTarget(start_lnum, close_lnum)
+
+    ## Getting the next iid available
+    var final_args = []
+
+    final_args[0] = g:output_parse_labeled_inline_links_target[-1].iid
+    var args_json = json_encode(final_args)
+
+    execute 'py3 get_next_uid_interface (' .. args_json .. ')'
+
+    var iid = g:output_get_next_uid
+  
+    append(lnum, '<I=' .. buid .. '#' .. iid .. '>' .. label .. '</I>')
 
 enddef
+
 
 
 
